@@ -1,8 +1,7 @@
-import { Request, Response } from "express";
-import { ConnectionConfig, Client, Pool } from "pg";
-import { hash, compare } from "bcrypt";
+const pg = require("pg");
+const bcrypt = require("bcrypt");
 
-const pgConnectionString: ConnectionConfig = {
+const pgConnectionString = {
   host: "localhost",
   port: 5432,
   database: "icm",
@@ -12,9 +11,9 @@ const pgConnectionString: ConnectionConfig = {
 
 const userTable = "users";
 
-const testEmail = async (req: Request, res: Response) => {
+const testEmail = async (req, res) => {
   const { email } = req.body;
-  const pool = new Pool(pgConnectionString);
+  const pool = new pg.Pool(pgConnectionString);
 
   await pool.connect();
 
@@ -40,21 +39,21 @@ const testEmail = async (req: Request, res: Response) => {
   }
 };
 
-const register = async (req: Request, res: Response) => {
+const register = async (req, res) => {
   req.session;
   const { name, whatsapp, email, password } = req.body;
 
   let admin = true;
 
-  const client = new Client(pgConnectionString);
+  const client = new pg.Client(pgConnectionString);
   await client.connect();
 
   // Register into database
   try {
     // Hash Password
-    const hashedPassword: string = await hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    const registerQuery: string = `INSERT INTO ${userTable} (name, whatsapp, admin, email, password) VALUES ($1, $2, $3, $4, $5) RETURNING *`;
+    const registerQuery = `INSERT INTO ${userTable} (name, whatsapp, admin, email, password) VALUES ($1, $2, $3, $4, $5) RETURNING *`;
 
     const result = await client.query(registerQuery, [
       name,
@@ -73,9 +72,9 @@ const register = async (req: Request, res: Response) => {
     await client.end();
   }
 };
-const login = async (req: Request, res: Response) => {
+const login = async (req, res) => {
   const { email, password } = req.body;
-  const client = new Client(pgConnectionString);
+  const client = new pg.Client(pgConnectionString);
   await client.connect();
   const loginQuery = `SELECT * FROM ${userTable} WHERE email=$1;`;
 
@@ -86,7 +85,7 @@ const login = async (req: Request, res: Response) => {
     console.log("login control, received database query");
     const encryptedPassword = result.rows[0].password;
     console.log("entrypted password: " + encryptedPassword);
-    compare(password, encryptedPassword, (err, same) => {
+    bcrypt.compare(password, encryptedPassword, (err, same) => {
       if (err) {
         console.error("Error decrypting password on login " + err);
         res.status(500).json({ message: "Error decrypting password" });
@@ -98,7 +97,7 @@ const login = async (req: Request, res: Response) => {
         res.status(400).json({ message: "wrong password" });
       }
     });
-  } catch (err: any) {
+  } catch (err) {
     console.error("Error at loging controller " + err);
     res.status(500).json({ message: "Internal server error" + err });
   } finally {
@@ -107,9 +106,9 @@ const login = async (req: Request, res: Response) => {
   }
 };
 
-const logout = async (req: Request, res: Response) => {
+const logout = async (req, res) => {
   if (req.session) {
-    req.session.destroy((err: any) =>
+    req.session.destroy((err) =>
       console.error("Error destroying session " + err)
     );
   } else {
@@ -117,4 +116,4 @@ const logout = async (req: Request, res: Response) => {
   }
 };
 
-export { testEmail, register, login, logout };
+module.exports = { testEmail, register, login, logout };
