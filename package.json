@@ -1,13 +1,13 @@
 {
   "name": "icm-regional-backend",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon src/index.ts",
-    "build": "tsc src/index.ts",
-    "start": "node src/index.js"
+    "build": "tsc src/index.ts"
   },
   "author": "woragis <masteringthecode.woragis@gmail.com>",
   "license": "ISC",
@@ -22,8 +22,6 @@
     "dotenv": "^16.4.1",
     "express": "^4.18.2",
     "express-session": "^1.18.0",
-    "nodemon": "^3.0.3",
-    "pg": "^8.11.3",
-    "ts-node": "^10.9.2"
+    "pg": "^8.11.3"
   }
 }
