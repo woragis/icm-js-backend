@@ -1,12 +1,13 @@
 const pg = require("pg");
 const bcrypt = require("bcrypt");
+require("dotenv").config();
 
 const pgConnectionString = {
-  host: "localhost",
-  port: 5432,
-  database: "icm",
-  user: "woragis",
-  password: "woragispg",
+  host: process.env.DB_HOST || "localhost",
+  port: process.env.DB_PORT || 5432,
+  database: process.env.DB || "icm",
+  user: process.env.DB_USER || "woragis",
+  password: process.env.DB_PASSWORD || "woragispg",
 };
 
 const userTable = "users";
@@ -18,10 +19,7 @@ const testEmail = async (req, res) => {
   await pool.connect();
 
   try {
-    const result = await pool.query(
-      `SELECT EXISTS (SELECT * FROM ${userTable} WHERE email=$1)`,
-      [email]
-    );
+    const result = await pool.query(`SELECT EXISTS (SELECT * FROM ${userTable} WHERE email=$1)`, [email]);
 
     const { exists } = result.rows[0];
     if (exists) {
@@ -31,9 +29,7 @@ const testEmail = async (req, res) => {
     }
   } catch (err) {
     console.error("Error testing existance of email " + err);
-    res
-      .status(500)
-      .json({ message: "Error testing existance of email " + err });
+    res.status(500).json({ message: "Error testing existance of email " + err });
   } finally {
     await pool.end();
   }
@@ -55,13 +51,7 @@ const register = async (req, res) => {
 
     const registerQuery = `INSERT INTO ${userTable} (name, whatsapp, admin, email, password) VALUES ($1, $2, $3, $4, $5) RETURNING *`;
 
-    const result = await client.query(registerQuery, [
-      name,
-      whatsapp,
-      admin,
-      email,
-      hashedPassword,
-    ]);
+    const result = await client.query(registerQuery, [name, whatsapp, admin, email, hashedPassword]);
     const userInfo = result.rows[0];
     console.log("User registred: " + userInfo);
     res.status(201).json(result);
@@ -108,9 +98,7 @@ const login = async (req, res) => {
 
 const logout = async (req, res) => {
   if (req.session) {
-    req.session.destroy((err) =>
-      console.error("Error destroying session " + err)
-    );
+    req.session.destroy((err) => console.error("Error destroying session " + err));
   } else {
     res.status(400).json({ message: "already logged off" });
   }
